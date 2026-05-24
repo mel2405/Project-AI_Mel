@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astro Campaign Calendar — June 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f5f4f2;
+  --surface: #ffffff;
+  --surface2: #f9f8f6;
+  --border: #e8e5e0;
+  --border-light: #f0ede8;
+  --text-primary: #1a1917;
+  --text-secondary: #6b6760;
+  --text-tertiary: #a09c97;
+  --accent: #1d4ed8;
+  --accent-light: #eff3ff;
+  --green: #166534;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --red: #991b1b;
+  --red-bg: #fff1f2;
+  --red-border: #fecdd3;
+  --amber: #92400e;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
+  --blue: #1e40af;
+  --blue-bg: #eff6ff;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  font-size: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: .75rem; }
+.header-logo {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 600; letter-spacing: -.5px;
+}
+.header-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.header-sub { font-size: 12px; color: var(--text-tertiary); }
+.header-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  background: var(--accent-light); color: var(--accent);
+  padding: 3px 10px; border-radius: 20px;
+  border: 1px solid #c7d7fe;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+.section { margin-bottom: 2rem; }
+.section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: .75rem;
+}
+
+/* ── KPI CARDS ───────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow);
+  transition: box-shadow .15s;
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); }
+.kpi-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; line-height: 1.3; }
+.kpi-value { font-size: 26px; font-weight: 600; color: var(--text-primary); line-height: 1; letter-spacing: -.5px; }
+.kpi-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 5px; }
+.kpi-card.green .kpi-value { color: var(--green); }
+.kpi-card.red   .kpi-value { color: var(--red); }
+.kpi-card.amber .kpi-value { color: var(--amber); }
+.kpi-divider {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 16px;
+}
+.kpi-split-item { flex: 1; }
+.kpi-split-item + .kpi-split-item {
+  border-left: 1px solid var(--border); padding-left: 16px;
+}
+
+/* ── CHARTS ─────────────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr;
+  gap: 12px;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.chart-title {
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: .1rem;
+}
+.chart-sub { font-size: 11px; color: var(--text-tertiary); margin-bottom: .9rem; }
+.chart-wrap { position: relative; }
+
+/* ── FILTERS ─────────────────────────────────────────────── */
+.filters-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: .875rem 1.25rem;
+  display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+}
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-lbl { font-size: 11px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+.filter-select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; color: var(--text-primary);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 28px 5px 9px;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6760' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  min-width: 140px;
+  transition: border-color .15s;
+}
+.filter-select:focus { outline: none; border-color: var(--accent); }
+.search-box {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; color: var(--text-primary);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 9px 5px 30px;
+  min-width: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='6' cy='6' r='4.5' stroke='%23a09c97' stroke-width='1.3'/%3E%3Cpath d='M9.5 9.5l2.5 2.5' stroke='%23a09c97' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 9px center;
+  transition: border-color .15s;
+}
+.search-box:focus { outline: none; border-color: var(--accent); }
+.search-box::placeholder { color: var(--text-tertiary); }
+.filter-reset {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-secondary);
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 10px;
+  cursor: pointer; margin-left: auto;
+  transition: all .15s;
+}
+.filter-reset:hover { background: var(--surface2); color: var(--text-primary); }
+.result-count {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: 'DM Mono', monospace;
+  margin-left: .5rem;
+}
+
+/* ── TABLE ───────────────────────────────────────────────── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.table-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12.5px; min-width: 960px;
+}
+thead th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky; top: 0; z-index: 10;
+}
+thead th:first-child { border-radius: var(--radius) 0 0 0; }
+tbody tr { border-bottom: 1px solid var(--border-light); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td {
+  padding: 9px 14px;
+  color: var(--text-primary);
+  vertical-align: middle;
+  line-height: 1.4;
+}
+td.muted { color: var(--text-secondary); }
+.td-brand { font-weight: 500; }
+.td-type  { color: var(--text-secondary); font-size: 11.5px; }
+.td-date  { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; }
+
+/* ── PROMO LINK ──────────────────────────────────────────── */
+.promo-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; color: var(--accent); text-decoration: none;
+  font-weight: 500; transition: color .1s;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.promo-link:hover { color: #1e3a8a; text-decoration: underline; }
+.promo-link svg { flex-shrink: 0; }
+.promo-nolink { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; font-weight: 600; padding: 3px 8px;
+  border-radius: 5px; white-space: nowrap; letter-spacing: .01em;
+}
+.badge-submitted  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
+.badge-missing    { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red-border); }
+.badge-link       { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
+.badge-ct {
+  display: inline-block;
+  font-size: 10px; font-weight: 500;
+  padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ── CAMPAIGN TYPE COLORS ────────────────────────────────── */
+.ct-bd      { background:#eff3ff; color:#1d4ed8; }
+.ct-sbd     { background:#f3e8ff; color:#7e22ce; }
+.ct-gf      { background:#f0fdf4; color:#166534; }
+.ct-deals   { background:#fff7ed; color:#c2410c; }
+.ct-pln     { background:#ecfeff; color:#155e75; }
+.ct-snd     { background:#fdf4ff; color:#86198f; }
+.ct-tamvan  { background:#f0f9ff; color:#0369a1; }
+.ct-beauty  { background:#fff1f2; color:#be123c; }
+.ct-curated { background:#f8fafc; color:#475569; }
+.ct-tcu     { background:#f7fee7; color:#3d6b21; }
+.ct-vip     { background:#fdf6ec; color:#92400e; }
+
+/* ── PAGINATION ──────────────────────────────────────────── */
+.table-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .7rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.pg-info { font-size: 11px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; }
+.pg-btns { display: flex; gap: 4px; }
+.pg-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 500;
+  padding: 4px 10px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-primary);
+  transition: all .15s;
+}
+.pg-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pg-btn:disabled { color: var(--text-tertiary); cursor: not-allowed; }
+
+/* ── VALIDATION SECTION ──────────────────────────────────── */
+.val-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.val-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.val-card-head {
+  padding: .75rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.val-card-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.val-count {
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+  padding: 2px 9px; border-radius: 20px;
+}
+.val-count.red  { background: var(--red-bg);   color: var(--red); }
+.val-count.amb  { background: var(--amber-bg);  color: var(--amber); }
+.val-count.blue { background: var(--blue-bg);   color: var(--blue); }
+.val-count.ok   { background: var(--green-bg);  color: var(--green); }
+.val-list { padding: .4rem 0; max-height: 220px; overflow-y: auto; }
+.val-item {
+  padding: .5rem 1.1rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border-light); font-size: 12px;
+  transition: background .1s;
+}
+.val-item:last-child { border-bottom: none; }
+.val-item:hover { background: var(--surface2); }
+.val-brand { font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+.val-meta  { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+.val-empty { padding: 1rem 1.1rem; font-size: 12px; color: var(--text-tertiary); font-style: italic; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .main { padding: 1rem; }
+  .charts-row { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .header { padding: 0 1rem; }
+}
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .filters-bar { flex-direction: column; align-items: stretch; }
+  .filter-group { flex-direction: column; align-items: flex-start; }
+  .filter-select, .search-box { min-width: unset; width: 100%; }
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">A</div>
+    <div>
+      <div class="header-title">Campaign Calendar</div>
+      <div class="header-sub">Operational Monitoring Dashboard</div>
+    </div>
+  </div>
+  <div class="header-badge">June 2026</div>
+</header>
+
+<main class="main">
+
+  <!-- KPI SUMMARY -->
+  <section class="section">
+    <div class="section-label">KPI Summary</div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </section>
+
+  <!-- CAMPAIGN BREAKDOWN -->
+  <section class="section">
+    <div class="section-label">Campaign Breakdown</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Campaign Type</div>
+        <div class="chart-sub">Distribution by campaign programme</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ctChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Exposure Type</div>
+        <div class="chart-sub">Placement breakdown</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="expChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Brand Category</div>
+        <div class="chart-sub">Food vs Non Food</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="catChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMPAIGN CALENDAR TABLE -->
+  <section class="section">
+    <div class="section-label">Campaign Calendar</div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <span class="filter-lbl">Search</span>
+        <input type="text" class="search-box" id="searchBox" placeholder="Brand name or campaign type...">
+      </div>
+      <div class="filter-group">
+        <span class="filter-lbl">Campaign type</span>
+        <select class="filter-select" id="fCt"></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-lbl">Category</span>
+        <select class="filter-select" id="fCat"></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-lbl">Exposure type</span>
+        <select class="filter-select" id="fExp"></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-lbl">Validation</span>
+        <select class="filter-select" id="fVal"></select>
+      </div>
+      <button class="filter-reset" onclick="resetFilters()">Reset filters</button>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign Type</th>
+              <th>Brand Name</th>
+              <th>Exposure Type</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Category</th>
+              <th>Promo Plan</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span class="pg-info" id="pgInfo"></span>
+        <div class="pg-btns">
+          <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">&#8592; Prev</button>
+          <button class="pg-btn" id="pgNext" onclick="changePage(1)">Next &#8594;</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALIDATION MONITORING -->
+  <section class="section">
+    <div class="section-label">Validation Monitoring</div>
+    <div class="val-grid">
+      <div class="val-card" id="vcMissing"></div>
+      <div class="val-card" id="vcNoLink"></div>
+      <div class="val-card" id="vcDupes"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────
+const ALL_DATA = [{"campaignType": "Brand Day", "brandName": "Coca Cola", "exposureType": "Homepage Banner", "startDate": "12 Jun", "endDate": "12 Jun", "brandCategory": "Food", "promoName": "Astro x Coca-Cola Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1tD-8UvNBu2lueSooijHmCcG0-XfUEAIt3UvVjibU5qM/edit?gid=1913820770#gid=1913820770", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Coca Cola", "exposureType": "Homepage Banner", "startDate": "21 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "Astro x Coca-Cola Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1tD-8UvNBu2lueSooijHmCcG0-XfUEAIt3UvVjibU5qM/edit?gid=1913820770#gid=1913820770", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "P&G", "exposureType": "Homepage Banner", "startDate": "22 Jun", "endDate": "22 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1453345562#gid=1453345562&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "P&G", "exposureType": "Homepage Banner", "startDate": "2 Jun", "endDate": "4 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=799278915#gid=799278915&range=C4", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "P&G", "exposureType": "Big Catalog Tile", "startDate": "13 Jun", "endDate": "13 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1728021695#gid=1728021695&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "P&G", "exposureType": "2x2 Banner", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=224665300#gid=224665300&range=C4", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "P&G", "exposureType": "Homepage Banner", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=27120804#gid=27120804&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "P&G", "exposureType": "Big Catalog Tile", "startDate": "15 Jun", "endDate": "16 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1750031847#gid=1750031847&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "P&G", "exposureType": "Big Catalog Tile", "startDate": "21 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=3225016#gid=3225016&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "P&G", "exposureType": "Big Catalog Tile", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1121719769#gid=1121719769&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Aqua Danone", "exposureType": "Homepage Banner", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template - AQUA Danone", "promoUrl": "https://docs.google.com/spreadsheets/d/1AgdDxaxd9t6PXEASNTHb19FB73edjgJnJ5BTLHjPQAk/edit?gid=260759690#gid=260759690", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Aqua Danone", "exposureType": "Homepage Banner", "startDate": "7 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template - AQUA Danone", "promoUrl": "https://docs.google.com/spreadsheets/d/1AgdDxaxd9t6PXEASNTHb19FB73edjgJnJ5BTLHjPQAk/edit?gid=260759690#gid=260759690", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Wings", "exposureType": "Homepage Banner", "startDate": "25 Jun", "endDate": "27 Jun", "brandCategory": "Food", "promoName": "(External) Promo Astro (June, 2026) REV1.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1rwIUgh37bFBPuNWziw99KFKh9OjoIC7s/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Wings", "exposureType": "Big Catalog Tile", "startDate": "6 Jun", "endDate": "6 Jun", "brandCategory": "Food", "promoName": "(External) Promo Astro (June, 2026) REV1.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1rwIUgh37bFBPuNWziw99KFKh9OjoIC7s/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Heavenly Blush", "exposureType": "Homepage Banner", "startDate": "13 Jun", "endDate": "15 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Unilever", "exposureType": "Homepage Banner", "startDate": "20 Jun", "endDate": "20 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1287096102#gid=1287096102&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Unilever", "exposureType": "Homepage Banner", "startDate": "30 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=137293071#gid=137293071&range=C12", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Unilever", "exposureType": "2x2 Banner", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1223764969#gid=1223764969&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Belfoods", "exposureType": "2x2 Banner", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "Belfoods x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1cq_UQf733a1vcxQhq1clgGs54tnXSzp9oBA0N6YM37Y/edit?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "PT Perfect Companion Indonesia", "exposureType": "2x2 Banner", "startDate": "24 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation Template Brand Deals 24-30 Juni 2026.xlsx (form baru)_signed - Jeremy Brian.pdf", "promoUrl": "https://drive.google.com/open?id=1B9ATH69WIq4JGc-mKx76bmKSUkqAhAGL", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Walls", "exposureType": "Homepage Banner", "startDate": "11 Jun", "endDate": "11 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=521705171#gid=521705171&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Greenfields", "exposureType": "Homepage Banner", "startDate": "5 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Greenfields", "exposureType": "Big Catalog Tile", "startDate": "18 Jun", "endDate": "18 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Kellanova", "exposureType": "Homepage Banner", "startDate": "17 Jun", "endDate": "17 Jun", "brandCategory": "Food", "promoName": "KELLOGGS PRINGLES APR-JUN 2026_signedAyu (1).pdf", "promoUrl": "https://drive.google.com/open?id=14q9Gcb05Du9UjCe-Hc_kgoaL2HuvLaLO&usp=drive_fs", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Kellanova", "exposureType": "Big Catalog Tile", "startDate": "3 Jun", "endDate": "3 Jun", "brandCategory": "Food", "promoName": "KELLOGGS PRINGLES APR-JUN 2026_signedAyu (1).pdf", "promoUrl": "https://drive.google.com/open?id=14q9Gcb05Du9UjCe-Hc_kgoaL2HuvLaLO&usp=drive_fs", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "PT MARS SYMBIOSCIENCE INDONESIA", "exposureType": "Homepage Banner", "startDate": "16 Jun", "endDate": "16 Jun", "brandCategory": "Food", "promoName": "ASTRO June Promo 2026-signed - Jeremy Brian.pdf", "promoUrl": "https://drive.google.com/file/d/112dtVeksGCPPXfq5F9fBpy7ppXceFPT-/view", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "PT MARS SYMBIOSCIENCE INDONESIA", "exposureType": "Big Catalog Tile", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Food", "promoName": "1 June - ASTRO June Promo 2026 - Jeremy Brian.pdf", "promoUrl": "https://drive.google.com/open?id=1asnpdnRAfJgwVf00j4bf0JXAOCX9l5VB", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Godrej", "exposureType": "2x2 Banner", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Non Food", "promoName": "6. June 2026", "promoUrl": "https://drive.google.com/drive/folders/1vLDBSlMO2LK_fTnNHu1g4IZH5CJlIWOX?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Godrej", "exposureType": "Big Catalog Tile", "startDate": "7 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "6. June 2026", "promoUrl": "https://drive.google.com/drive/folders/1vLDBSlMO2LK_fTnNHu1g4IZH5CJlIWOX?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Kanzler", "exposureType": "2x2 Banner", "startDate": "24 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Campaign Kanzler - Juni 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oDyB5TKvoAXsDtmgFX6jO-KcCRWGIMjX/edit?usp=drive_link&ouid=113750074824823417901&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Kanzler", "exposureType": "Homepage Banner", "startDate": "4 Jun", "endDate": "4 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Campaign Kanzler - Juni 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oDyB5TKvoAXsDtmgFX6jO-KcCRWGIMjX/edit?usp=drive_link&ouid=113750074824823417901&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Sasa", "exposureType": "Homepage Banner", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "Working file - Sasa 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1St88VE5DNi-805wm6goHOEZ0PS01dr3w8_52gK7UDic/edit?gid=1198971275#gid=1198971275", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Sasa", "exposureType": "Big Catalog Tile", "startDate": "17 Jun", "endDate": "17 Jun", "brandCategory": "Non Food", "promoName": "Working file - Sasa 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1St88VE5DNi-805wm6goHOEZ0PS01dr3w8_52gK7UDic/edit?gid=1198971275#gid=1198971275", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Mondelez", "exposureType": "2x2 Banner", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "from campaign team", "promoUrl": "", "validationStatus": "Missing Link", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Mondelez", "exposureType": "Homepage Banner", "startDate": "19 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "from campaign team", "promoUrl": "", "validationStatus": "Missing Link", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Sari Roti", "exposureType": "Big Catalog Tile", "startDate": "14 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "SKP New Confirmation Sari Roti 14 Juni'26.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1v5K3OeV8Bem5mU1thjvMEzi3hC0jL0gx/edit?usp=sharing&ouid=100232149474111474668&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Beiersdorf", "exposureType": "Homepage Banner", "startDate": "30 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Beiersdorf", "exposureType": "Homepage Banner", "startDate": "23 Jun", "endDate": "23 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Kobe", "exposureType": "Homepage Banner", "startDate": "6 Jun", "endDate": "6 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template - Kobe boga utama", "promoUrl": "https://docs.google.com/spreadsheets/d/1O4G30l_GV_IGZGsQyKgm4SzCOrzh9IiFawJnzqq8xMo/edit?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Kobe", "exposureType": "Big Catalog Tile", "startDate": "19 Jun", "endDate": "19 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template - Kobe boga utama", "promoUrl": "https://docs.google.com/spreadsheets/d/1O4G30l_GV_IGZGsQyKgm4SzCOrzh9IiFawJnzqq8xMo/edit?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "KAO", "exposureType": "2x2 Banner", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1DxcKoCvBzL9A0jXP5kTt7afALvItmIOs \nhttps://drive.google.com/open?id=1ERehsztaT1fHgFzowSehZ4jk8mEfKxr3", "promoUrl": "https://drive.google.com/open?id=1DxcKoCvBzL9A0jXP5kTt7afALvItmIOs \nhttps://drive.google.com/open?id=1ERehsztaT1fHgFzowSehZ4jk8mEfKxr3", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "KAO", "exposureType": "Big Catalog Tile", "startDate": "16 Jun", "endDate": "16 Jun", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1DxcKoCvBzL9A0jXP5kTt7afALvItmIOs \nhttps://drive.google.com/open?id=1ERehsztaT1fHgFzowSehZ4jk8mEfKxr3", "promoUrl": "https://drive.google.com/open?id=1DxcKoCvBzL9A0jXP5kTt7afALvItmIOs \nhttps://drive.google.com/open?id=1ERehsztaT1fHgFzowSehZ4jk8mEfKxr3", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Unicharm", "exposureType": "Big Catalog Tile", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Samyang", "exposureType": "Big Catalog Tile", "startDate": "4 Jun", "endDate": "4 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Fonterra", "exposureType": "2x2 Banner", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "CL promo", "promoUrl": "", "validationStatus": "Missing Link", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Acaii", "exposureType": "Homepage Banner", "startDate": "29 Jun", "endDate": "29 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Kino", "exposureType": "Homepage Banner", "startDate": "5 Jun", "endDate": "5 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=780145398#gid=780145398&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Kino", "exposureType": "Big Catalog Tile", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=449589900#gid=449589900&range=C3", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Kimberly Clark", "exposureType": "Homepage Banner", "startDate": "9 Jun", "endDate": "9 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan KCS 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1mIOemuf3hfCoLynfiwu8AzmjShAhT6ucYXpAd-Ta4mk/edit?gid=1657225519#gid=1657225519&range=D2", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "SOHO", "exposureType": "Homepage Banner", "startDate": "15 Jun", "endDate": "15 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "SOHO", "exposureType": "Homepage Banner", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Enesis", "exposureType": "Homepage Banner", "startDate": "8 Jun", "endDate": "8 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1459251978#gid=1459251978&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Nutrifood", "exposureType": "Homepage Banner", "startDate": "19 Jun", "endDate": "19 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Colgate Palmolive", "exposureType": "Homepage Banner", "startDate": "29 Jun", "endDate": "29 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Reckitt", "exposureType": "2x2 Banner", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Reckitt", "exposureType": "Homepage Banner", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Reckitt", "exposureType": "Big Catalog Tile", "startDate": "9 Jun", "endDate": "9 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Beeru", "exposureType": "Homepage Banner", "startDate": "18 Jun", "endDate": "18 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Brand Festival Juni 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1tPXy4DzsIl6z9-J0mOEZ3tSGB0quLn7Q/edit?usp=sharing&ouid=102041898162232891719&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Beeru", "exposureType": "Big Catalog Tile", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Brand Festival Juni 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1tPXy4DzsIl6z9-J0mOEZ3tSGB0quLn7Q/edit?usp=sharing&ouid=102041898162232891719&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "PT Distribusi Surya Kencana", "exposureType": "Homepage Banner", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "PT Distribusi Surya Kencana", "exposureType": "Big Catalog Tile", "startDate": "22 Jun", "endDate": "22 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Indofood Snacks", "exposureType": "Homepage Banner", "startDate": "19 Jun", "endDate": "19 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Indofood Snacks", "exposureType": "Big Catalog Tile", "startDate": "2 Jun", "endDate": "2 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Unilever", "exposureType": "Homepage Banner", "startDate": "22 Jun", "endDate": "24 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=425330329#gid=425330329&range=C13", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Sosro", "exposureType": "Homepage Banner", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "Astro x Sosro", "promoUrl": "https://docs.google.com/spreadsheets/d/1lQ_4RJbsnZwbNSAIwIQi4xUff-j6hjXH4WfoveBsJMM/edit?gid=644654284#gid=644654284", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Super Brand Day", "brandName": "Pepsico", "exposureType": "Homepage Banner", "startDate": "8 Jun", "endDate": "10 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Pepsico", "exposureType": "2x2 Banner", "startDate": "24 Jun", "endDate": "30 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Pepsico", "exposureType": "Big Catalog Tile", "startDate": "20 Jun", "endDate": "20 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Garuda", "exposureType": "2x2 Banner", "startDate": "11 Jun", "endDate": "17 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Garuda", "exposureType": "Homepage Banner", "startDate": "21 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Yava", "exposureType": "Homepage Banner", "startDate": "22 Jun", "endDate": "22 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Cedea", "exposureType": "Homepage Banner", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Food", "promoName": "Cedea x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1agosx1a4LKxOuNN0mN_1tuHc8YEwM1uSWeT7e1uF7m8/edit?gid=1364759852#gid=1364759852", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Cedea", "exposureType": "Homepage Banner", "startDate": "2 Jun", "endDate": "2 Jun", "brandCategory": "Food", "promoName": "Cedea x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1agosx1a4LKxOuNN0mN_1tuHc8YEwM1uSWeT7e1uF7m8/edit?gid=1364759852#gid=1364759852", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Cedea", "exposureType": "2x2 Banner", "startDate": "21 Jun", "endDate": "23 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Nutrifood", "exposureType": "2x2 Banner", "startDate": "25 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "L'Oreal", "exposureType": "Homepage Banner", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Deals", "brandName": "Prochiz", "exposureType": "2x2 Banner", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Prochiz", "exposureType": "Homepage Banner", "startDate": "18 Jun", "endDate": "18 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Prochiz", "exposureType": "Big Catalog Tile", "startDate": "8 Jun", "endDate": "8 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Godrej", "exposureType": "Homepage Banner", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "6. June 2026", "promoUrl": "https://drive.google.com/drive/folders/1vLDBSlMO2LK_fTnNHu1g4IZH5CJlIWOX?usp=sharing", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Mr Potato", "exposureType": "Homepage Banner", "startDate": "18 Jun", "endDate": "18 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Vsoy", "exposureType": "Homepage Banner", "startDate": "11 Jun", "endDate": "11 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Dailymeal", "exposureType": "Big Catalog Tile", "startDate": "29 Jun", "endDate": "29 Jun", "brandCategory": "Food", "promoName": "Promo Astro _ Daiymeal 16 - 31 Jun 2026 - Indah Silvariani.xlsx", "promoUrl": "https://drive.google.com/file/d/1YwlMdy1nwN6yZQRxdyCcjWyzUHMeewPf/view", "validationStatus": "Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Groceries Festival", "brandName": "Pepsico", "exposureType": "Big Catalog Tile", "startDate": "5 Jun", "endDate": "5 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Brand Day", "brandName": "Sosro", "exposureType": "Homepage Banner", "startDate": "18 Jun", "endDate": "18 Jun", "brandCategory": "Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Q2 Ads Compile"}, {"campaignType": "Pojok Lokal Nusantara", "brandName": "Mitsuki", "exposureType": "Catalog Tile", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "Mitsuki Food x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1O5uJOpQmhWsOUB-TyGsAZtKKollB2OTpva1QCA75oYw/edit?gid=1654266872#gid=1654266872", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Pojok Lokal Nusantara", "brandName": "Macsready", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "Macsready x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/149HWu4fXkByWDzUz22IeQqHvIDrixtgKalvNv_3sg-A/edit?gid=1654266872#gid=1654266872", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Tricks", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "Tricks x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1v94aUppQQHbOkAfeKc7JU6J325WYaGr00JDdQgKBvc8/edit?gid=1654266872#gid=1654266872", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Oatside Bar", "exposureType": "Catalog Tile", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "SKP FLUSHOUT MAY-JUL 2026 (1).pdf", "promoUrl": "https://drive.google.com/open?id=1aP-5PXo5mVJytjscFsqTaZ13CTn7Rhyd&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Oatside Bar", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "SKP FLUSHOUT MAY-JUL 2026 (1).pdf", "promoUrl": "https://drive.google.com/open?id=1aP-5PXo5mVJytjscFsqTaZ13CTn7Rhyd&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Oatside Bar", "exposureType": "Catalog Tile", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "SKP FLUSHOUT MAY-JUL 2026 (1).pdf", "promoUrl": "https://drive.google.com/open?id=1aP-5PXo5mVJytjscFsqTaZ13CTn7Rhyd&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Oatside Bar", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "SKP FLUSHOUT MAY-JUL 2026 (1).pdf", "promoUrl": "https://drive.google.com/open?id=1aP-5PXo5mVJytjscFsqTaZ13CTn7Rhyd&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Dua Kelinci", "exposureType": "Catalog Tile", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "PROMO DUA KELINCI MAY - DEC 2026 (2) ASTRO - Sign (1).pdf", "promoUrl": "https://drive.google.com/open?id=1yZYiBYgLiNF5U4TfSz73M3OOWneRhXav&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Dua Kelinci", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "PROMO DUA KELINCI MAY - DEC 2026 (2) ASTRO - Sign (1).pdf", "promoUrl": "https://drive.google.com/open?id=1yZYiBYgLiNF5U4TfSz73M3OOWneRhXav&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Luckymore", "exposureType": "Catalog Tile", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "No Promo", "promoUrl": "", "validationStatus": "Missing Link", "source": "Food Category Focus"}, {"campaignType": "Pojok Lokal Nusantara", "brandName": "Eat Sambel (New SKU)", "exposureType": "Catalog Tile", "startDate": "29 Jun", "endDate": "5 Jul", "brandCategory": "Food", "promoName": "Sambal Bakar Indonesia Saji & Eat Sambel x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1kmlc58t_U_bSO6-ayPb6W0C_EnuDyJpqZiQ3owUyrFQ/edit?gid=1785961735#gid=1785961735", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Pojok Lokal Nusantara", "brandName": "Huntsman", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "Huntsman x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1Qk34vpPsP4hswY4yQ7i3oHBesCvC-U9Kwr63ARU2cCg/edit?gid=260715806#gid=260715806", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Cassa", "exposureType": "Catalog Tile", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template 2026 (NEW) - Juni.pdf", "promoUrl": "https://drive.google.com/open?id=1CoCxzOPIpn0egwkPt6-63Ehf7_mTslqT&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Cassa", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "14 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template 2026 (NEW) - Juni.pdf", "promoUrl": "https://drive.google.com/open?id=1CoCxzOPIpn0egwkPt6-63Ehf7_mTslqT&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Cassa", "exposureType": "Catalog Tile", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template 2026 (NEW) - Juni.pdf", "promoUrl": "https://drive.google.com/open?id=1CoCxzOPIpn0egwkPt6-63Ehf7_mTslqT&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Cassa", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "SKP Confirmation Template 2026 (NEW) - Juni.pdf", "promoUrl": "https://drive.google.com/open?id=1CoCxzOPIpn0egwkPt6-63Ehf7_mTslqT&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Green Sands", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "Astro SKP Confirmation June 2026 - MBI.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1DT52v9KrwgVoXk920Qgmyjck-mgYP9WH/edit?usp=sharing&ouid=100232149474111474668&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Pojok Lokal Nusantara", "brandName": "Bu Rudy (Oseng Tuna)", "exposureType": "Catalog Tile", "startDate": "15 Jun", "endDate": "21 Jun", "brandCategory": "Food", "promoName": "Bu Rudy x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1IsBHmYakJ5Gp55xptzC-Y_ITqz1aiUZlh0jsyYEUXRE/edit?gid=2085805083#gid=2085805083", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Kino", "exposureType": "Catalog Tile", "startDate": "1 Jun", "endDate": "7 Jun", "brandCategory": "Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1061966846#gid=1061966846&range=C14", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Snack & Drinks Attack", "brandName": "Francis", "exposureType": "Catalog Tile", "startDate": "22 Jun", "endDate": "28 Jun", "brandCategory": "Food", "promoName": "Scan_20260512_rotated (1).pdf", "promoUrl": "https://drive.google.com/open?id=1hZwkwjjPmFYfOPdpu1hCVhD5OFqA4SEZ&usp=drive_fs", "validationStatus": "Submitted", "source": "Food Category Focus"}, {"campaignType": "Tamvan SOS", "brandName": "Rexona", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1249683872#gid=1249683872&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Lifebuoy", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1249683872#gid=1249683872&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Pepsodent", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1249683872#gid=1249683872&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Cave", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "Cave x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1O8vni_jQigNno7uX0O9ahLVBlW0H8i1fDdWR0IynV1Y/edit?gid=31479142#gid=31479142", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Smith", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "ASTRO SKP JUNI smith - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/open?id=1QySwE949McKvduBLmxVir_XjNyvCjTeI", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Kino", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1291991672#gid=1291991672&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Erha", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "Promo Erha June 2026 - Astro - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/file/d/1gtGe467XkkWrzLoIPkrXiVdf9tW8m7pC/view", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Kahf", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SKP Kahf - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/open?id=16oGwIdO32NMtxcMOlvQfQEK-tzBtOI5R", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Schick", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SIGNED SC - SKP Confirmation Template 2026 - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/open?id=1-jYpnT53atmdoyRmgCQIHUJYhokElCos", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Bromen", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "Bromen x Astro _ Promo Juni - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/open?id=1Wrf4f9KkAXohi6w7Aupz-lJAENyq6C2S", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Banana Boat", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SIGNED BB ASTRO NEW - SKP Confirmation Template 2026 - Hafiz Fauzan.xlsx", "promoUrl": "https://drive.google.com/open?id=1rpysjexDtT6iOWMHECXpUr3PG87tdaBT", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "BLP", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "BLP - SKP Jun 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1wnJdwSfpxiawG4IeBmIkIJTJTZQ289h2/edit?gid=1672388735#gid=1672388735", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "MOP", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Wardah", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Labore", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Avoskin", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SKP AVOSKIN LACOCO JUNE 2026 - ASTRO .xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1j8K5oOpb0ykq9sILZOMZqi4Z_pB9S9o1/edit?gid=1627781864#gid=1627781864", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Tamvan SOS", "brandName": "Gillette", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=459379101#gid=459379101&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Beauty SOS", "brandName": "Gillette", "exposureType": "Catalog Tile", "startDate": "25 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=459379101#gid=459379101&range=C14", "validationStatus": "Submitted", "source": "Beauty & Mens"}, {"campaignType": "Curated Deals", "brandName": "PawPower", "exposureType": "Platform Campaign DLP", "startDate": "30 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "Paw Power (PT HANYA HEWAN PELIHARAAN) x Astro", "promoUrl": "https://docs.google.com/spreadsheets/d/1o3Fij4NyBPNx7nb7GvjCpAtor_wANMEqwmX7jC4p9aA/edit?gid=1707105049#gid=1707105049", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Puregreen", "exposureType": "Platform Campaign DLP", "startDate": "30 Jun", "endDate": "30 Jun", "brandCategory": "Non Food", "promoName": "SKP Puregreen june 2026 (1).pdf", "promoUrl": "https://drive.google.com/file/d/1DwsClqERwEXxr9zpcqk2ZkdLGi1jJzLK/view?usp=sharing", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Puregreen", "exposureType": "Platform Campaign DLP", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Non Food", "promoName": "SKP Puregreen june 2026 (1).pdf", "promoUrl": "https://drive.google.com/file/d/1DwsClqERwEXxr9zpcqk2ZkdLGi1jJzLK/view?usp=sharing", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Oatside", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation Template - PT Float Oat Indonesia June 2026 - Claudia Alianto.xlsx", "promoUrl": "https://drive.google.com/open?id=1rx5cyYmhAGltb7wp3wKBq2ZvCf-cosDC", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "JHHP", "exposureType": "Platform Campaign DLP", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Non Food", "promoName": "06. SKP Confirmation Template 2026 - June.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1pq89OjQD7-Jf-yLWn7KXQOncK9VnyNUz/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "JHHP", "exposureType": "Platform Campaign DLP", "startDate": "22 Jun", "endDate": "22 Jun", "brandCategory": "Non Food", "promoName": "06. SKP Confirmation Template 2026 - June.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1pq89OjQD7-Jf-yLWn7KXQOncK9VnyNUz/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Tessa", "exposureType": "Platform Campaign DLP", "startDate": "6 Jun", "endDate": "6 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Astro June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1InZbg2TMhNDjXwE1wzpyJfVmHIsCF2h2/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Tessa", "exposureType": "Platform Campaign DLP", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Astro June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1InZbg2TMhNDjXwE1wzpyJfVmHIsCF2h2/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Tessa", "exposureType": "Platform Campaign DLP", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Astro June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1InZbg2TMhNDjXwE1wzpyJfVmHIsCF2h2/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Wings", "exposureType": "Platform Campaign DLP", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "(External) Promo Astro (June, 2026) REV1.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1rwIUgh37bFBPuNWziw99KFKh9OjoIC7s/edit?gid=1357862485#gid=1357862485", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Mustella", "exposureType": "Platform Campaign DLP", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "SKP Interbat Mid Year June-26.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1JBjiSOwZmfVrKgiWZG93YdbnI96UfNDc/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Nacific", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "NF 2_SKP Confirmation Midyear sale 2026", "promoUrl": "https://docs.google.com/spreadsheets/d/1wllEnfivgECI_UZa35LFF1F8GfMoDxx-rQpvHktHZxc/edit?gid=371463894#gid=371463894", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Alamii", "exposureType": "Platform Campaign DLP", "startDate": "6 Jun", "endDate": "6 Jun", "brandCategory": "Non Food", "promoName": "Promo Alamii Juni 2026 (ASTRO).xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1MY65T2Bv145YT7U2iFtMw-C-av_u4RSQ/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Cussons", "exposureType": "Platform Campaign DLP", "startDate": "1 Jun", "endDate": "1 Jun", "brandCategory": "Non Food", "promoName": "ASTRO JUN 26 PROMO_cussons.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1PSZ9dhHeBxmrMZMAx5dgz99GPPXq07T8/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Sensodyne", "exposureType": "Platform Campaign DLP", "startDate": "7 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "SKP Haleon ASTRO June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1YODIjiMBOm0Ps5dfyIKPDIAU0506FwbM/edit?gid=1170982486#gid=1170982486", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Sensodyne", "exposureType": "Platform Campaign DLP", "startDate": "14 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "SKP Haleon ASTRO June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1YODIjiMBOm0Ps5dfyIKPDIAU0506FwbM/edit?gid=1170982486#gid=1170982486", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Sensodyne", "exposureType": "Platform Campaign DLP", "startDate": "21 Jun", "endDate": "21 Jun", "brandCategory": "Non Food", "promoName": "SKP Haleon ASTRO June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1YODIjiMBOm0Ps5dfyIKPDIAU0506FwbM/edit?gid=1170982486#gid=1170982486", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Sensodyne", "exposureType": "Platform Campaign DLP", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "SKP Haleon ASTRO June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1YODIjiMBOm0Ps5dfyIKPDIAU0506FwbM/edit?gid=1170982486#gid=1170982486", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Moell", "exposureType": "Platform Campaign DLP", "startDate": "7 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "SKP- Moell Astro School Holiday, Better For You & VIP Deals June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1sb0UNx3NYkPYQhCmj0nGS3Ag6IYfoeDJ/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Tempo Scan", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation Template BCL & TSP Juni 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1I11ANgvUwq5SB8rwJMKDU4B0EoGbCAKb/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Lactacyd", "exposureType": "Platform Campaign DLP", "startDate": "7 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1hLHDfKf616CJKj-G1KCnDOPp54KtOIrx/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Lactacyd", "exposureType": "Platform Campaign DLP", "startDate": "14 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1hLHDfKf616CJKj-G1KCnDOPp54KtOIrx/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Lactacyd", "exposureType": "Platform Campaign DLP", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1hLHDfKf616CJKj-G1KCnDOPp54KtOIrx/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "5 Jun", "endDate": "5 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "6 Jun", "endDate": "6 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "17 Jun", "endDate": "17 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "20 Jun", "endDate": "20 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "24 Jun", "endDate": "24 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Unicharm", "exposureType": "Platform Campaign DLP", "startDate": "28 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "SKP Promo Plan Astro - Jun 2026_Unicharm.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1IGUUMY3mCbFpgNxBmxZrUz8yTirpql37/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Promina", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Promina", "exposureType": "Platform Campaign DLP", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Promina", "exposureType": "Platform Campaign DLP", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "SUN", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "SUN", "exposureType": "Platform Campaign DLP", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "SUN", "exposureType": "Platform Campaign DLP", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Jun 2026 Promina SUN x Astro - NSF Signed.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1oBf0VS7K9Y8Lll3jeilJA4Eg3aA-Vs6y/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Pristine", "exposureType": "Platform Campaign DLP", "startDate": "25 Jun", "endDate": "25 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation ASTRO Juni 2026 - Pristine - Indriani Hartati.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1tDLMEkxSY7OI1cAdywbp9dvbXFZvM4PL/edit?usp=sharing&ouid=100232149474111474668&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Pristine", "exposureType": "Platform Campaign DLP", "startDate": "26 Jun", "endDate": "26 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation ASTRO Juni 2026 - Pristine - Indriani Hartati.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1tDLMEkxSY7OI1cAdywbp9dvbXFZvM4PL/edit?usp=sharing&ouid=100232149474111474668&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Pristine", "exposureType": "Platform Campaign DLP", "startDate": "27 Jun", "endDate": "27 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation ASTRO Juni 2026 - Pristine - Indriani Hartati.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1tDLMEkxSY7OI1cAdywbp9dvbXFZvM4PL/edit?usp=sharing&ouid=100232149474111474668&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Dailymeal", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "TBD", "promoUrl": "", "validationStatus": "Missing Link", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Dailymeal", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "TBD", "promoUrl": "", "validationStatus": "Missing Link", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "5 Jun", "endDate": "5 Jun", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "17 Jun", "endDate": "17 Jun", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Curated Deals", "brandName": "Verites", "exposureType": "Platform Campaign DLP", "startDate": "", "endDate": "", "brandCategory": "Non Food", "promoName": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "promoUrl": "https://drive.google.com/open?id=1SWvZD_MeU-qfB_FlYupapa1PfC0Amzvy", "validationStatus": "Submitted", "source": "Curated Deals"}, {"campaignType": "Take Care of You", "brandName": "Tessa", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Astro June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1InZbg2TMhNDjXwE1wzpyJfVmHIsCF2h2/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "For Skin Sake", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "SKP Confirmation Template Juni 2026 - Zahrotu Diniyah.xlsx", "promoUrl": "https://drive.google.com/open?id=1uq3VYqJ8YXCRSZLYIG1s4lRlXORHLyKI", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "DSK", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Reckitt", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Wings", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "(External) Promo Astro (June, 2026) REV1.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1rwIUgh37bFBPuNWziw99KFKh9OjoIC7s/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "SOHO", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Colgate Palmolive", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "ColPal June SKP 2026 - PCHC.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1MnmMowuookoHH8Q9S7WTBwfUx94v7EUv/edit?gid=2046611604#gid=2046611604", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "BDF", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "", "promoUrl": "", "validationStatus": "Not Yet Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Enesis", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=852012004#gid=852012004&range=C14", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Wings", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "(External) Promo Astro (June, 2026) REV1.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1rwIUgh37bFBPuNWziw99KFKh9OjoIC7s/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Unilever", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1046465765#gid=1046465765&range=C13", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Kino", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "[Jun '26] Retail Promo Plan", "promoUrl": "https://docs.google.com/spreadsheets/d/1myp-NDKNL3vpNebkuoeqIi62Eyh2EFJfDU8G72HYYbM/edit?gid=1796341161#gid=1796341161&range=C13", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Univenus", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "CL Budget, boleh tambahkan SKU lain di luar promo plan dari brand: SKP Univenus x Astro Q2 June 2026.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "PCHC Focus"}, {"campaignType": "Take Care of You", "brandName": "Tessa", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "Promo Plan Astro June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1InZbg2TMhNDjXwE1wzpyJfVmHIsCF2h2/edit?usp=sharing&ouid=112622936247510907582&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "PCHC Focus"}, {"campaignType": "VIP Deals", "brandName": "Bumbu Bunda", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "SKP- Bumbu Bunda Astro Better For You & VIP Deals June 2026.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Sensodyne", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "Haleon VIP Deals June 2026.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Lactacyd", "exposureType": "Catalog Tile", "startDate": "12 Jun", "endDate": "14 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Sensodyne", "exposureType": "Catalog Tile", "startDate": "19 Jun", "endDate": "21 Jun", "brandCategory": "Non Food", "promoName": "Haleon VIP Deals June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1XgdrnBcRFIaIFv2ou_C6MtCCCd9xMEwT/edit?gid=1025712704#gid=1025712704", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Lactacyd", "exposureType": "Catalog Tile", "startDate": "19 Jun", "endDate": "21 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1hLHDfKf616CJKj-G1KCnDOPp54KtOIrx/edit?gid=1921182356#gid=1921182356", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Univenus", "exposureType": "Catalog Tile", "startDate": "26 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "using CL Budget, boleh tambahkan barang diluar promo plan dari brand: SKP Univenus x Astro Q2 June 2026.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Johnson", "exposureType": "Catalog Tile", "startDate": "26 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "Kenvue - Promo Plan June Astro 2026 (SKP) final (Campaign)_rev.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/11WAKDfTJDXBdGFOSZpuqFukmusuVdKFa/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Sensodyne", "exposureType": "Catalog Tile", "startDate": "26 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "Haleon VIP Deals June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1XgdrnBcRFIaIFv2ou_C6MtCCCd9xMEwT/edit?gid=1025712704#gid=1025712704", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Moell", "exposureType": "Catalog Tile", "startDate": "26 Jun", "endDate": "28 Jun", "brandCategory": "Non Food", "promoName": "SKP- Moell Astro School Holiday, Better For You & VIP Deals June 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1sb0UNx3NYkPYQhCmj0nGS3Ag6IYfoeDJ/edit?usp=drive_link&ouid=106381752449412677947&rtpof=true&sd=true", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Darlie", "exposureType": "Catalog Tile", "startDate": "29 Jun", "endDate": "2 Jul", "brandCategory": "Non Food", "promoName": "04. SKP - Darlie June Promotion 2026.xlsx", "promoUrl": "https://docs.google.com/spreadsheets/d/1-fyVYaNBT3SOTTzuhIcPMUqNLIKggDH0/edit?gid=1133969811#gid=1133969811", "validationStatus": "Submitted", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Sensodyne", "exposureType": "Catalog Tile", "startDate": "5 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "Haleon VIP Deals June 2026.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Lactacyd", "exposureType": "Catalog Tile", "startDate": "5 Jun", "endDate": "7 Jun", "brandCategory": "Non Food", "promoName": "SKP Opella-Sanofi ASTRO June 2026 (1).xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}, {"campaignType": "VIP Deals", "brandName": "Cussons", "exposureType": "Catalog Tile", "startDate": "8 Jun", "endDate": "11 Jun", "brandCategory": "Non Food", "promoName": "ASTRO JUN 26 PROMO_cussons.xlsx", "promoUrl": "", "validationStatus": "Missing Link", "source": "Big Banget Promo"}];
+
+// ── CAMPAIGN TYPE → CSS CLASS ────────────────────────────────────────
+const CT_CLASS = {
+  'Brand Day':'ct-bd','Super Brand Day':'ct-sbd','Groceries Festival':'ct-gf',
+  'Brand Deals':'ct-deals','Pojok Lokal Nusantara':'ct-pln','Snack & Drinks Attack':'ct-snd',
+  'Tamvan SOS':'ct-tamvan','Beauty SOS':'ct-beauty','Curated Deals':'ct-curated',
+  'Take Care of You':'ct-tcu','VIP Deals':'ct-vip'
+};
+
+// ── STATE ────────────────────────────────────────────────────────────
+let filtered = [...ALL_DATA];
+let page = 1;
+const PER = 25;
+
+// ── HELPERS ─────────────────────────────────────────────────────────
+function cnt(arr, key) {
+  return arr.reduce((m, r) => { m[r[key]] = (m[r[key]]||0)+1; return m; }, {});
+}
+function linkSvg() {
+  return `<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8M7 1h4m0 0v4m0-4L5 7"/></svg>`;
+}
+function renderPromo(name, url) {
+  if (!name) return `<span class="promo-nolink">No promo plan</span>`;
+  const display = name.length > 34 ? name.slice(0, 32) + '…' : name;
+  if (url) {
+    return `<a class="promo-link" href="${url}" target="_blank" rel="noopener" title="${name}">${linkSvg()}${display}</a>`;
+  }
+  return `<span class="promo-link" style="color:var(--amber);cursor:default" title="Promo plan exists but no direct link">${display}</span>`;
+}
+function renderBadge(status) {
+  if (status === 'Submitted')        return `<span class="badge badge-submitted">✓ Submitted</span>`;
+  if (status === 'Not Yet Submitted') return `<span class="badge badge-missing">✗ Missing</span>`;
+  if (status === 'Missing Link')     return `<span class="badge badge-link">⚠ No Link</span>`;
+  return `<span class="badge">${status}</span>`;
+}
+
+// ── KPI SECTION ──────────────────────────────────────────────────────
+function buildKPIs(data) {
+  const total = data.length;
+  const brands = new Set(data.map(r=>r.brandName)).size;
+  const sub   = data.filter(r=>r.validationStatus==='Submitted').length;
+  const miss  = data.filter(r=>r.validationStatus==='Not Yet Submitted').length;
+  const noLnk = data.filter(r=>r.validationStatus==='Missing Link').length;
+  const food  = data.filter(r=>r.brandCategory==='Food').length;
+  const nf    = data.filter(r=>r.brandCategory==='Non Food').length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Total Campaigns</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">June 2026</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Unique Brands</div>
+      <div class="kpi-value">${brands}</div>
+      <div class="kpi-sub">active this month</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Promo Submitted</div>
+      <div class="kpi-value">${sub}</div>
+      <div class="kpi-sub">${Math.round(sub/total*100)}% completion</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Not Yet Submitted</div>
+      <div class="kpi-value">${miss}</div>
+      <div class="kpi-sub">${Math.round(miss/total*100)}% of total</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Missing Link</div>
+      <div class="kpi-value">${noLnk}</div>
+      <div class="kpi-sub">promo exists, no URL</div>
+    </div>
+    <div class="kpi-divider">
+      <div class="kpi-split-item">
+        <div class="kpi-label">Food</div>
+        <div class="kpi-value" style="font-size:22px;color:#166534">${food}</div>
+        <div class="kpi-sub">${Math.round(food/total*100)}%</div>
+      </div>
+      <div class="kpi-split-item">
+        <div class="kpi-label">Non Food</div>
+        <div class="kpi-value" style="font-size:22px;color:#1d4ed8">${nf}</div>
+        <div class="kpi-sub">${Math.round(nf/total*100)}%</div>
+      </div>
+    </div>`;
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────
+let ctChart, expChart, catChart;
+const PALETTE = ['#1d4ed8','#7e22ce','#166534','#c2410c','#155e75',
+                 '#86198f','#0369a1','#be123c','#475569','#3d6b21','#92400e'];
+
+function buildCharts(data) {
+  const ctMap  = cnt(data,'campaignType');
+  const expMap = cnt(data,'exposureType');
+  const catMap = cnt(data,'brandCategory');
+
+  const ctL  = Object.keys(ctMap).sort((a,b)=>ctMap[b]-ctMap[a]);
+  const expL = Object.keys(expMap).sort((a,b)=>expMap[b]-expMap[a]);
+  const catL = Object.keys(catMap);
+
+  const chartOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#1a1917', titleFont:{family:"'DM Sans', sans-serif",size:11},
+      bodyFont:{family:"'DM Sans', sans-serif",size:11},
+      padding:10, cornerRadius:6
+    }},
+    scales:{ x:{ ticks:{font:{size:10},color:'#6b6760'}, grid:{display:false} },
+             y:{ ticks:{font:{size:10},color:'#6b6760'}, grid:{color:'#f0ede8'} }}
+  };
+
+  if(ctChart)  ctChart.destroy();
+  if(expChart) expChart.destroy();
+  if(catChart) catChart.destroy();
+
+  ctChart = new Chart(document.getElementById('ctChart'), {
+    type:'bar',
+    data:{ labels:ctL,
+      datasets:[{data:ctL.map(l=>ctMap[l]),
+        backgroundColor:ctL.map((_,i)=>PALETTE[i%PALETTE.length]+'cc'),
+        borderColor:ctL.map((_,i)=>PALETTE[i%PALETTE.length]),
+        borderWidth:1, borderRadius:4 }]},
+    options:{ ...chartOpts, plugins:{...chartOpts.plugins,
+      tooltip:{...chartOpts.plugins.tooltip,
+        callbacks:{label:c=>` ${c.raw} campaigns`}}}}
+  });
+
+  expChart = new Chart(document.getElementById('expChart'), {
+    type:'bar',
+    data:{ labels:expL,
+      datasets:[{data:expL.map(l=>expMap[l]),
+        backgroundColor:['#1d4ed8cc','#166534cc','#c2410ccc','#7e22cecc'],
+        borderColor:['#1d4ed8','#166534','#c2410c','#7e22ce'],
+        borderWidth:1, borderRadius:4}]},
+    options:{ ...chartOpts, indexAxis:'y',
+      scales:{ x:{...chartOpts.scales.x}, y:{ticks:{font:{size:10.5},color:'#6b6760'},grid:{display:false}}},
+      plugins:{...chartOpts.plugins,tooltip:{...chartOpts.plugins.tooltip,
+        callbacks:{label:c=>` ${c.raw} entries`}}}}
+  });
+
+  catChart = new Chart(document.getElementById('catChart'), {
+    type:'doughnut',
+    data:{ labels:catL,
+      datasets:[{data:catL.map(l=>catMap[l]),
+        backgroundColor:['#166534cc','#1d4ed8cc'],
+        borderColor:['#166534','#1d4ed8'],
+        borderWidth:2, hoverOffset:6}]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{display:true,position:'bottom',
+          labels:{font:{size:11,family:"'DM Sans', sans-serif"},
+                  padding:12,color:'#6b6760',boxWidth:10,boxHeight:10}},
+        tooltip:{backgroundColor:'#1a1917',padding:10,cornerRadius:6,
+          bodyFont:{family:"'DM Sans', sans-serif",size:11},
+          callbacks:{label:c=>`${c.label}: ${c.raw} (${Math.round(c.raw/data.length*100)}%)`}}}}
+  });
+}
+
+// ── FILTER SETUP ─────────────────────────────────────────────────────
+function populateFilters() {
+  const cts  = [...new Set(ALL_DATA.map(r=>r.campaignType))].sort();
+  const cats = [...new Set(ALL_DATA.map(r=>r.brandCategory))].sort();
+  const exps = [...new Set(ALL_DATA.map(r=>r.exposureType))].sort();
+  const vals = [...new Set(ALL_DATA.map(r=>r.validationStatus))].sort();
+
+  function fill(id, opts, label) {
+    document.getElementById(id).innerHTML =
+      `<option value="">All ${label}</option>` + opts.map(v=>`<option>${v}</option>`).join('');
+  }
+  fill('fCt',  cts,  'types');
+  fill('fCat', cats, 'categories');
+  fill('fExp', exps, 'types');
+  fill('fVal', vals, 'statuses');
+}
+
+function applyFilters() {
+  const q   = document.getElementById('searchBox').value.toLowerCase().trim();
+  const ct  = document.getElementById('fCt').value;
+  const cat = document.getElementById('fCat').value;
+  const exp = document.getElementById('fExp').value;
+  const val = document.getElementById('fVal').value;
+
+  filtered = ALL_DATA.filter(r =>
+    (!q   || r.brandName.toLowerCase().includes(q) || r.campaignType.toLowerCase().includes(q)) &&
+    (!ct  || r.campaignType   === ct)  &&
+    (!cat || r.brandCategory  === cat) &&
+    (!exp || r.exposureType   === exp) &&
+    (!val || r.validationStatus === val)
+  );
+  page = 1;
+  buildKPIs(filtered);
+  buildCharts(filtered);
+  renderTable();
+}
+
+function resetFilters() {
+  ['searchBox','fCt','fCat','fExp','fVal'].forEach(id => {
+    const el = document.getElementById(id);
+    el.tagName==='SELECT' ? el.value='' : el.value='';
+  });
+  applyFilters();
+}
+
+// ── TABLE RENDER ─────────────────────────────────────────────────────
+function renderTable() {
+  const start = (page-1)*PER;
+  const slice = filtered.slice(start, start+PER);
+  const tbody = document.getElementById('tableBody');
+
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2.5rem;color:var(--text-tertiary);font-size:13px">No campaigns match the current filters.</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => {
+      const cls = CT_CLASS[r.campaignType] || 'ct-curated';
+      return `<tr>
+        <td><span class="badge-ct ${cls}">${r.campaignType}</span></td>
+        <td class="td-brand">${r.brandName}</td>
+        <td class="td-type">${r.exposureType}</td>
+        <td class="td-date">${r.startDate || '—'}</td>
+        <td class="td-date">${r.endDate   || '—'}</td>
+        <td><span style="font-size:11.5px;color:var(--text-secondary)">${r.brandCategory}</span></td>
+        <td>${renderPromo(r.promoName, r.promoUrl)}</td>
+        <td>${renderBadge(r.validationStatus)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const total = filtered.length;
+  document.getElementById('pgInfo').textContent =
+    total ? `${start+1}–${Math.min(start+PER,total)} of ${total} campaigns` : '0 results';
+  document.getElementById('resultCount').textContent =
+    filtered.length !== ALL_DATA.length ? `${filtered.length} of ${ALL_DATA.length} shown` : `${ALL_DATA.length} campaigns`;
+  document.getElementById('pgPrev').disabled = page <= 1;
+  document.getElementById('pgNext').disabled = start+PER >= total;
+}
+
+function changePage(dir) {
+  page = Math.max(1, Math.min(Math.ceil(filtered.length/PER), page+dir));
+  renderTable();
+  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ── VALIDATION CARDS ─────────────────────────────────────────────────
+function buildValidation() {
+  // Missing promo plans
+  const missing = ALL_DATA.filter(r => r.validationStatus === 'Not Yet Submitted');
+  const missingUniq = [...new Map(missing.map(r=>[r.brandName+'|'+r.campaignType, r])).values()];
+
+  // Missing links
+  const noLink = ALL_DATA.filter(r => r.validationStatus === 'Missing Link');
+
+  // Duplicates (same brand + campaign type, multiple dates)
+  const dupMap = {};
+  ALL_DATA.forEach(r => {
+    const k = r.brandName + '|' + r.campaignType;
+    dupMap[k] = (dupMap[k]||0)+1;
+  });
+  const dups = Object.entries(dupMap).filter(([,v])=>v>1).sort((a,b)=>b[1]-a[1]);
+
+  function card(el, title, countCls, items, emptyMsg, renderItem) {
+    const cnt_val = items.length;
+    document.getElementById(el).innerHTML = `
+      <div class="val-card-head">
+        <span class="val-card-title">${title}</span>
+        <span class="val-count ${countCls}">${cnt_val}</span>
+      </div>
+      <div class="val-list">
+        ${cnt_val === 0
+          ? `<div class="val-empty">${emptyMsg}</div>`
+          : items.slice(0,10).map(renderItem).join('') +
+            (cnt_val > 10 ? `<div class="val-empty">+${cnt_val-10} more</div>` : '')}
+      </div>`;
+  }
+
+  card('vcMissing', '⚠ Missing Promo Plans', 'red',
+    missingUniq, 'All promo plans submitted ✓',
+    r => `<div class="val-item">
+      <span class="val-brand">${r.brandName}</span>
+      <span class="val-meta">${r.campaignType} · ${r.startDate}</span>
+    </div>`);
+
+  card('vcNoLink', '⚡ Promo Exists, No URL', 'amb',
+    noLink, 'All promo plans have direct links ✓',
+    r => `<div class="val-item">
+      <span class="val-brand">${r.brandName}</span>
+      <span class="val-meta">${r.promoName ? r.promoName.slice(0,28)+'…' : r.campaignType}</span>
+    </div>`);
+
+  card('vcDupes', '↻ Multi-Slot Brands', 'blue',
+    dups, 'No duplicate entries found',
+    ([k,v]) => {
+      const [brand, ct] = k.split('|');
+      return `<div class="val-item">
+        <span class="val-brand">${brand}</span>
+        <span class="val-meta">${v} slots · ${ct}</span>
+      </div>`;
+    });
+}
+
+// ── EVENT LISTENERS ──────────────────────────────────────────────────
+['fCt','fCat','fExp','fVal'].forEach(id =>
+  document.getElementById(id).addEventListener('change', applyFilters));
+document.getElementById('searchBox').addEventListener('input', applyFilters);
+
+// ── INIT ─────────────────────────────────────────────────────────────
+populateFilters();
+buildKPIs(ALL_DATA);
+buildCharts(ALL_DATA);
+renderTable();
+buildValidation();
+</script>
+</body>
+</html>
